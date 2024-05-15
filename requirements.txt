@@ -1,0 +1,11 @@
+numpy >= 1.22.2
+pandas >= 1.4.1
+requests >= 2.27.1
+openpyxl >= 3.0.9
+biopython >= 1.79
+igraph >= 0.9.10
+networkx >= 2.5
+sphinx-jsonschema
+rdkit-pypi
+scikit-learn
+seaborn

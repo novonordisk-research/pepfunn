@@ -1,0 +1,21 @@
+List of failed rules identified by number. The rule ids are explained at the end of the report.
+###########################################
+A total of 1 solubility rules failed. The rules id(s) are: 1.
+A total of 1 synthesis rules failed. The rules id(s) are: 10.
+###########################################
+
+The higher the number of rules violated, the lower the probability to be solubilized or synthesized experimentally (https://bioserv.rpbs.univ-paris-diderot.fr/services/SolyPep/).
+
+- List of solubility rules violations:
+1. Discard if the number of charged and/or of hydrophobic amino acids exceeds 45%
+2. Discard if the absolute total peptide charge at pH 7 is more than +1
+3. Discard if the number of glycine or proline is more than one in the sequence
+4. Discard if the first or the last amino acid is charged
+5. Discard if any amino acid represents more than 25% of the total sequence
+
+- List of synthesis rules violations:
+6. Discard if 2 prolines are consecutive
+7. Discard if the motifs DG and DP are present in the sequence
+8. Discard if the sequences ends with N or Q residues
+9. Discard if there are charged residues every 5 amino acids
+10. Discard if there are oxidation-sensitive amino acids (M, C or W)
