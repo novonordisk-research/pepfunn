@@ -578,6 +578,7 @@ def get_peptide(biln, monomer_lib=None):
     fasta = ''.join(total_monomers)
     return fasta
 
+    
 ############################################################
 ## End of sequence.py
 ############################################################
