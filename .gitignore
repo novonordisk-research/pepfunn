@@ -1,0 +1,10 @@
+# Byte-compiled
+__pycache__/
+.idea/
+.ipynb_checkpoints/
+
+# Distribution / packaging
+build/
+dist/
+*.egg-info/
+*.egg

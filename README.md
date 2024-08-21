@@ -12,9 +12,11 @@ The package relies mostly on the external packages RDKit (https://rdkit.org/) an
 
 ## Quick installation
 
-The module is available in pypi, which allow installing stable versions with:
+The project can be cloned to run a local pip installation `pip install -e .`. 
 
-`pip install pepfunn`
+It can be also installed directly from Gitlab with the following command:
+
+`pip install git+https://github.com/novonordisk-research/pepfunn.git`
 
 ## Main functions
 
