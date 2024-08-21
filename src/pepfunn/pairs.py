@@ -347,7 +347,7 @@ class MatchedPairs:
         Get sequences with or without a reference sequence. The generation of gaps is allowed
 
         :param df: dataframe with the source data
-        :param id_column: ID with the NNCD number
+        :param id_column: ID number
         :param seq_column: Column containing the peptide sequences
         :param seq_ref: Reference peptide to compare (optional)
         
