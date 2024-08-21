@@ -572,14 +572,14 @@ class MatchedPairs:
             filtered_values_2 = plot_df.loc[conditions[0] & conditions[1], property_columns[1]].tolist()
 
             plt.scatter(values[0],values[1], marker="o",s=25,alpha=1.0, cmap=cm, edgecolors='black', linewidths=0.5)
-            plt.plot(filtered_values_1, filtered_values_2, marker="o", markersize=5,alpha=1.0,markeredgewidth=2.0, markeredgecolor='green',mfc='none',linestyle="None")
+            plt.plot(filtered_values_1, filtered_values_2, marker="o", markersize=5,alpha=1.0,markeredgewidth=1.0, markeredgecolor='green',mfc='none',linestyle="None")
             
         if len(conditions)==3:
             filtered_values_1 = plot_df.loc[conditions[0] & conditions[1] & conditions[2], property_columns[0]].tolist()
             filtered_values_2 = plot_df.loc[conditions[0] & conditions[1] & conditions[2], property_columns[1]].tolist()
             
             plt.scatter(values[0],values[1],c=values[2], marker="o",s=25,alpha=1.0,cmap=cm, edgecolors='black', linewidths=0.5)
-            plt.plot(filtered_values_1, filtered_values_2, marker="o", markersize=5,alpha=1.0,markeredgewidth=2.0, markeredgecolor='green',mfc='none',linestyle="None")
+            plt.plot(filtered_values_1, filtered_values_2, marker="o", markersize=5,alpha=1.0,markeredgewidth=1.0, markeredgecolor='green',mfc='none',linestyle="None")
 
         
         plt.axvline(x=thresholds[0], linestyle='dashed', color='black', linewidth=0.5)
@@ -591,7 +591,7 @@ class MatchedPairs:
         cbar = plt.colorbar()
         cbar.ax.invert_yaxis() 
         plt.savefig(out_name)
-        plt.close()
+        plt.show()
 
 ############################################################
 ## End of pairs.py
