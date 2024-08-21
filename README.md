@@ -14,7 +14,7 @@ The package depends on some external packages like RDKit (https://rdkit.org/) an
 
 The project can be cloned to run a local pip installation `pip install -e .`. 
 
-It can be also installed directly from Github with the following command:
+The package can also be installed directly from Github with the following command:
 
 `pip install git+https://github.com/novonordisk-research/pepfunn.git`
 
