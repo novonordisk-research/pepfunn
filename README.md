@@ -4,17 +4,17 @@
 
 ## Purpose
 
-Here we present PepFuNN, a package for the analysis of natural and modified peptides using a set of modules to study their sequences, including design of libraries, and peptide clustering and similarity analysis.
+Here we present PepFuNN, a package for the analysis of natural and modified peptides using a set of modules to study their sequences, including design of libraries, peptide clustering and similarity analysis.
 
 ## Required third-party tools
 
-The package relies mostly on the external packages RDKit (https://rdkit.org/) and BioPython (https://biopython.org/).
+The package depends on some external packages like RDKit (https://rdkit.org/) and BioPython (https://biopython.org/). Their licenses are included in the repository.
 
 ## Quick installation
 
 The project can be cloned to run a local pip installation `pip install -e .`. 
 
-It can be also installed directly from Gitlab with the following command:
+It can be also installed directly from Github with the following command:
 
 `pip install git+https://github.com/novonordisk-research/pepfunn.git`
 
@@ -24,7 +24,7 @@ It can be also installed directly from Gitlab with the following command:
 
 ## Notebooks
 
-A folder called `notebooks` include a set of jupyter scripts per module available in PepFuNN. The notebooks contains the main functionalities with various peptide sequences as input, and generate output files in the same folder to check and compare the obtained results.
+A folder called `notebooks` include a set of jupyter scripts per module available in PepFuNN. The notebooks contain the main functionalities with various peptide sequences as input. The output files in the same folder to check and compare the obtained results.
 
 ## Tests
 
