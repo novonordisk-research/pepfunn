@@ -38,7 +38,7 @@ python test.py
 
 If you use PepFuNN in your work, please cite the following papers:
 
-* 'PepFuNN: Novo Nordisk open-source toolkit to enable peptide in silico analysis', Preprint. Link: https://doi.org/10.26434/chemrxiv-2024-xq3pl.
+* 'PepFuNN: Novo Nordisk open-source toolkit to enable peptide in silico analysis', Preprint. Link: https://chemrxiv.org/engage/chemrxiv/article-details/66c5ba0020ac769e5f50bbfa.
 * 'PepFun 2.0: improved protocols for the analysis of natural and modified peptides', Future Drug Discovery, 2023. Link: https://www.future-science.com/doi/10.4155/fdd-2023-0004
 * 'PepFun: Open Source Protocols for Peptide-Related Computational Analysis', Molecules, 2021. Link: https://www.mdpi.com/1420-3049/26/6/1664
 
