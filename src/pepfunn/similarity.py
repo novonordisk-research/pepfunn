@@ -915,10 +915,11 @@ class graphPep:
                     for x in range(0,num_con):
                         frac=mon_mod.split('+')[x+1]
                         link_id = frac.split(',')[0]
-                        if link_id not in self.pairs:
-                            self.pairs[link_id]=[(mon_orig+'('+frac,j+1,i)]
-                        else:
-                            self.pairs[link_id].append((mon_orig+'('+frac,j+1,i))
+                        if link_id.isdigit():
+                            if link_id not in self.pairs:
+                                self.pairs[link_id]=[(mon_orig+'('+frac,j+1,i)]
+                            else:
+                                self.pairs[link_id].append((mon_orig+'('+frac,j+1,i))
 
     ########################################################################################
     def __getLinkers(self):
