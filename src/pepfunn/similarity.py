@@ -415,7 +415,7 @@ class Alignment:
 ##########################################################################
 # Additional function
 ########################################################################## 
-def monomerFP(peptide, radius=2, nBits=1024, add_freq=False, prop_list=['heavy', 'nrot', 'hacc', 'hdon', 'nhet', 'tpsa', 'mw']):
+def monomerFP(peptide, radius=2, nBits=1024, add_freq=False, prop_list=['heavy', 'nrot', 'hacc', 'hdon', 'nhet', 'tpsa', 'mw'], property_lib=None):
     """
     Function to calculate a monomer-based fingerprint based on a list of monomer properties and a radius
 
@@ -514,13 +514,20 @@ def monomerFP(peptide, radius=2, nBits=1024, add_freq=False, prop_list=['heavy',
         else:
             final_frags[fragment]=frags[fragment]
 
-    
-    # Read the pre-calculated properties of the monomers    
-    module_dir = os.path.dirname(os.path.abspath(__file__))
-    data_dir = os.path.join(module_dir, SequenceConstants.def_path)
-    file_path = os.path.join(data_dir, SequenceConstants.def_property)
-    with open(file_path, 'r') as handle:
-        monomers_prop = pepDescriptors.get_properties(handle) 
+    if property_lib is None:
+        # Read the pre-calculated properties of the monomers    
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(module_dir, SequenceConstants.def_path)
+        file_path = os.path.join(data_dir, SequenceConstants.def_property)
+        with open(file_path, 'r') as handle:
+            monomers_prop = pepDescriptors.get_properties(handle)
+    else:
+        # Read the pre-calculated properties of the monomers    
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(module_dir, SequenceConstants.def_path)
+        file_path = os.path.join(data_dir, property_lib)
+        with open(file_path, 'r') as handle:
+            monomers_prop = pepDescriptors.get_properties(handle)
 
     # Define the fingerprint
     fp = [0]*nBits
