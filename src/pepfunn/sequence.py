@@ -22,6 +22,8 @@ import os
 import warnings
 import sys
 import tempfile
+import numpy as np
+from itertools import combinations
 
 # BioPython
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
@@ -38,6 +40,8 @@ from rdkit.Chem import Lipinski
 from rdkit.Chem import Descriptors
 from rdkit.Chem import PandasTools
 from rdkit.Chem import rdMolDescriptors
+from rdkit.Chem.Fingerprints import FingerprintMols
+from rdkit import DataStructs
 
 ########################################################################################
 # Classes and Functions
@@ -51,6 +55,7 @@ class SequenceConstants:
     def_lib_filename = "monomers.sdf"
     def_matrix = "matrix.txt"
     def_property = "property.txt"
+    def_property_ext = 'property_ext.txt'
     monomer_join = "-"
     chain_separator = "."
     csv_separator = ","
@@ -577,6 +582,209 @@ def get_peptide(biln, monomer_lib=None):
 
     fasta = ''.join(total_monomers)
     return fasta
+
+##########################################################################
+def add_terminal_oxygen(aa_smiles):
+    
+    """    
+    Add terminal oxygen to an amino acid SMILES
+    """
+
+    # convert the SMILES string to a molecule object
+    aa_mol = Chem.MolFromSmiles(aa_smiles)
+    
+    # Pattern of the backbone
+    backbone = Chem.MolFromSmarts('NCC(=O)')
+    carboxyl_carbon_idx = aa_mol.GetSubstructMatch(backbone)[-2]
+    
+    # New oxygen
+    mod = Chem.MolFromSmiles('O')
+    new_mol = Chem.CombineMols(aa_mol,mod)
+    max_atom_idx = new_mol.GetNumAtoms() - 1
+    
+    # Editable mol
+    ed_mol = Chem.EditableMol(new_mol)
+    
+    # Add bond based on the index
+    ed_mol.AddBond(carboxyl_carbon_idx,max_atom_idx,order=Chem.rdchem.BondType.SINGLE)
+    
+    # Export the mol
+    final_mol = ed_mol.GetMol()
+    modified_smiles = Chem.MolToSmiles(final_mol)
+
+    return modified_smiles
+
+##########################################################################
+def peptideFromSMILES(smiles, add_smiles=False):
+    """
+    Class to convert from smiles to peptide sequence
+
+    :param smiles: SMILES to convert into sequence
+    """
+    
+    aa_dict = {'G': 'NCC(=O)',
+                'A': 'N[C@@]([H])(C)C(=O)',
+                'R': 'N[C@@]([H])(CCCNC(=N)N)C(=O)',
+                'N': 'N[C@@]([H])(CC(=O)N)C(=O)',
+                'D': 'N[C@@]([H])(CC(=O)O)C(=O)',
+                'C': 'N[C@@]([H])(CS)C(=O)',
+                'E': 'N[C@@]([H])(CCC(=O)O)C(=O)',
+                'Q': 'N[C@@]([H])(CCC(=O)N)C(=O)',
+                'H': 'N[C@@]([H])(CC1=CN=C-N1)C(=O)',
+                'I': 'N[C@@]([H])(C(CC)C)C(=O)',
+                'L': 'N[C@@]([H])(CC(C)C)C(=O)',
+                'K': 'N[C@@]([H])(CCCCN)C(=O)',
+                'M': 'N[C@@]([H])(CCSC)C(=O)',
+                'F': 'N[C@@]([H])(Cc1ccccc1)C(=O)',
+                'P': 'N1[C@@]([H])(CCC1)C(=O)',
+                'S': 'N[C@@]([H])(CO)C(=O)',
+                'T': 'N[C@@]([H])(C(O)C)C(=O)',
+                'W': 'N[C@@]([H])(CC(=CN2)C1=C2C=CC=C1)C(=O)',
+                'Y': 'N[C@@]([H])(Cc1ccc(O)cc1)C(=O)',
+                'V': 'N[C@@]([H])(C(C)C)C(=O)'}
+
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(module_dir, SequenceConstants.def_path)
+    file_path = os.path.join(data_dir, SequenceConstants.def_property_ext)    
+    with open(file_path, 'r') as handle:
+
+        # Dictionary with the properties
+        dict_df = {}
+
+        data = handle.read().split('\n')
+        for line in data:
+            if line:
+                fields = line.split()
+                dict_df[fields[0]]=fields[1]
+
+    m = Chem.MolFromSmiles(smiles)
+    try:
+        aa_smiles = {'ALA': 'C[C@H](N)C=O', 'CYS': 'N[C@H](C=O)CS', 'ASP': 'N[C@H](C=O)CC(=O)O', 'GLU': 'N[C@H](C=O)CCC(=O)O', 'PHE': 'N[C@H](C=O)Cc1ccccc1', 
+                    'GLY': 'NCC=O', 'HIS': 'N[C@H](C=O)Cc1c[nH]cn1', 'ILE': 'CC[C@H](C)[C@H](N)C=O', 'LYS': 'NCCCC[C@H](N)C=O', 'LEU': 'CC(C)C[C@H](N)C=O', 
+                    'MET': 'CSCC[C@H](N)C=O', 'ASN': 'NC(=O)C[C@H](N)C=O', 'PRO': 'O=C[C@@H]1CCCN1', 'GLN': 'NC(=O)CC[C@H](N)C=O', 'ARG': 'N=C(N)NCCC[C@H](N)C=O', 
+                    'SER': 'N[C@H](C=O)CO', 'THR': 'C[C@@H](O)[C@H](N)C=O', 'VAL': 'CC(C)[C@H](N)C=O', 'TRP': 'N[C@H](C=O)Cc1c[nH]c2ccccc12','TYR': 'N[C@H](C=O)Cc1ccc(O)cc1'}
+        aas = ['GLY','ALA', 'VAL', 'CYS', 'ASP', 'GLU', 'PHE', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'TRP','TYR']
+        
+        CAatoms = m.GetSubstructMatches(Chem.MolFromSmarts("[C:0](=[O:1])[C:2][N:3]"))
+        for atoms in CAatoms:
+            a = m.GetAtomWithIdx(atoms[2])
+            info = Chem.AtomPDBResidueInfo()
+            info.SetName(" CA ") #spaces are important
+            a.SetMonomerInfo(info)
+        
+        for curr_aa in aas:
+            matches = m.GetSubstructMatches(Chem.MolFromSmiles(aa_smiles[curr_aa]))
+            for atoms in matches:
+                for atom in atoms:
+                    a = m.GetAtomWithIdx(atom)
+                    info = Chem.AtomPDBResidueInfo()
+                    if a.GetMonomerInfo() != None:
+                        if a.GetMonomerInfo().GetName() == " CA ":
+                            info.SetName(" CA ")
+                            info.SetResidueName(curr_aa)
+                            a.SetMonomerInfo(info)
+        
+        # renumber the backbone atoms so the sequence order is correct:
+        mult=len(m.GetSubstructMatches(Chem.MolFromSmiles(aa_smiles["GLY"])))
+        bbsmiles = "O"+"C(=O)CN"*mult
+        backbone = m.GetSubstructMatches(Chem.MolFromSmiles(bbsmiles))[0]
+        
+        id_list = list(backbone)
+        id_list.reverse()
+        for idx in [a.GetIdx() for a in m.GetAtoms()]:
+            if idx not in id_list:
+                id_list.append(idx)
+        m = Chem.RenumberAtoms(m,newOrder=id_list)
+    except:
+        pass
+        
+    # Pattern of the AA backbone
+    final_pep=[]
+    for patt in ['NCC(=O)N','NCC(=O)O']:
+        peptide_bond_representation = Chem.MolFromSmarts(patt)
+        am = np.array(Chem.GetAdjacencyMatrix(m))
+
+        for peptide_bond in m.GetSubstructMatches(peptide_bond_representation):
+            alpha = peptide_bond[1]
+            nitrogens = set([peptide_bond[0],peptide_bond[-1]])
+
+            aa_atom_idx = set([alpha])
+            set2 = set()
+            while aa_atom_idx != set2:
+                set2 = aa_atom_idx.copy()
+                temp_am = am[:, list(aa_atom_idx)]
+                aa_atom_idx = set(np.where(temp_am==1)[0]) | aa_atom_idx
+                aa_atom_idx -= nitrogens
+            aa_atom_idx.add(peptide_bond[0])
+
+            bonds = []
+            for i,j in combinations(aa_atom_idx, 2):
+                b = m.GetBondBetweenAtoms(int(i),int(j))
+                if b: bonds.append(b.GetIdx())
+
+            mol1 = Chem.PathToSubmol(m, bonds)
+            flag=0
+            for aa in aa_dict:
+                smiles2=aa_dict[aa]
+                mol2 = Chem.MolFromSmiles(smiles2)
+                fp1 = FingerprintMols.FingerprintMol(mol1)
+                fp2 = FingerprintMols.FingerprintMol(mol2)
+                smiles_similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
+                if smiles_similarity==1.0:
+                    final_pep.append(aa)
+                    flag=1
+                    break
+
+            if flag==0:
+                for aa in dict_df:
+                    smiles2=dict_df[aa]
+                    mol2 = Chem.MolFromSmiles(smiles2)
+
+                    fp1 = FingerprintMols.FingerprintMol(mol1)
+                    fp2 = FingerprintMols.FingerprintMol(mol2)
+                    smiles_similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
+                    if smiles_similarity==1.0:
+                        final_pep.append(aa)
+                        flag=1
+                        break
+                
+            if flag==0:
+                try:
+                    new_smiles1=add_terminal_oxygen(Chem.MolToSmiles(mol1))
+                    mol1=Chem.MolFromSmiles(new_smiles1)
+
+                    for aa in dict_df: 
+                        smiles2=dict_df[aa]
+                        mol2 = Chem.MolFromSmiles(smiles2)
+
+                        fp1 = FingerprintMols.FingerprintMol(mol1)
+                        fp2 = FingerprintMols.FingerprintMol(mol2)
+                        smiles_similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
+                        if smiles_similarity==1.0:
+                            final_pep.append(aa)
+                            flag=1
+                            break
+                except:
+                    pass
+            
+            if flag==0:
+                if add_smiles:
+                    final_pep.append(Chem.MolToSmiles(mol1))
+                else:
+                    final_pep.append('X')
+
+    
+    if add_smiles:
+        final_seq=''
+        for mon in final_pep:
+            if len(mon)==1:
+                final_seq+=mon
+            else:
+                final_seq+='|'+mon+'|'
+    else:
+        final_seq= '-'.join(final_pep)
+
+    return final_seq
 
     
 ############################################################
