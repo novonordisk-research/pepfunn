@@ -72,7 +72,7 @@ class Sequence:
     Class with functions to perform different type of analysis using a peptide sequence as an object
     """
 
-    def __init__(self, sequence, format='fasta', report_liabilities=False):
+    def __init__(self, sequence, format='fasta', pH=False, report_liabilities=False):
         """
         Inititalize the class calculating some basic properties
 
@@ -99,7 +99,10 @@ class Sequence:
             self.mol = Chem.MolFromHELM("PEPTIDE1{%s}$$$$" % helm)
             self.smiles=Chem.MolToSmiles(self.mol)
 
-        self.pH = 7
+        if pH:
+            self.pH=pH
+        else:
+            self.pH = 7
         self.solubility_rules_failed = 0
         self.set_sol_rules = []
         self.length_peptide = len(self.sequence)
@@ -173,7 +176,7 @@ class Sequence:
         :return net_charge: The net charge based on reported pka values
         """
         # Set the general variables and pka terms
-        self.pH = pH_internal
+        # self.pH = pH_internal
         self.netCharge = 0.0
         pka_alpha_amino = {'G': 9.60, 'A': 9.69, 'V': 9.62, 'L': 9.60, 'I': 9.68, 'M': 9.21, 'F': 9.13, 'W': 9.39,
                            'P': 10.60, 'S': 9.15,
