@@ -6,6 +6,6 @@ biopython >= 1.79
 igraph >= 0.9.10
 networkx >= 2.5
 sphinx-jsonschema
-rdkit-pypi
+rdkit
 scikit-learn
 seaborn
