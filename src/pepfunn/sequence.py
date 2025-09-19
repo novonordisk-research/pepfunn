@@ -789,6 +789,65 @@ def peptideFromSMILES(smiles, add_smiles=False):
 
     return final_seq
 
+##########################################################################
+def get_external(fasta, mods):
+    """
+    Function to generate BILN format given a sequence and their modifications
+    :param fasta: Fasta version of the peptide
+    :param mods: dictionary with the modifications
+
+    :return: seq_final
+    """
+            
+    seq1=[]
+    protractors=[]
+    prot_count=1
+    protractor_end=''
+    
+    for i,aa in enumerate(fasta):    
+        if i ==0 and i in mods:
+            seq1.append(mods[i][0])
+        if i+1 in mods:
+            info=mods[i+1][0]
+            if 'K-p:' in info:
+                seq1.append(f'K({prot_count},3)')
+                start_index = info.find('K-p:')
+                end_index = info.find('-l:')
+                protractor = info[start_index+len('K-p:'):end_index]
+                fragment_index = end_index+len('-l:')
+                linker = info[fragment_index:]
+                
+                fields=split_outside(linker, '-', '[]')
+                new_fields=[]
+
+                for f in fields:
+                    if 'x' in f:
+                        substring = f[2:]
+                        temporal = [substring]*int(f[0])
+                        newF='-'.join(temporal)
+                        new_fields.append(newF)
+                    else:
+                        new_fields.append(f)
+
+                right = new_fields
+                right.insert(0, protractor)
+                protractor_end = '-'.join(right)
+                protractor_end+=f'({prot_count},2)'
+                protractors.append(protractor_end)
+                prot_count+=1
+            else:
+                if 'amid' in info:
+                    seq1.append(info[0]+'-NH2')
+                else:
+                    seq1.append(info)
+        else:
+            seq1.append(aa)
+
+    seq_final='-'.join(seq1)
+    for prot in protractors:
+        seq_final=seq_final+'.'+prot
+
+    return seq_final
     
 ############################################################
 ## End of sequence.py
