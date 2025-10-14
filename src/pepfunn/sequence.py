@@ -790,7 +790,7 @@ def peptideFromSMILES(smiles, add_smiles=False):
     return final_seq
 
 ##########################################################################
-def get_external(fasta, mods):
+def get_external(fasta, mods, disulf=[]):
     """
     Function to generate BILN format given a sequence and their modifications
     :param fasta: Fasta version of the peptide
@@ -798,7 +798,10 @@ def get_external(fasta, mods):
 
     :return: seq_final
     """
-            
+    aminoacids_back = {"Ala": "A", "Asp": "D", "Glu": "E", "Phe": "F", "His": "H",
+                       "Ile": "I", "Leu": "L", "Met": "M", "Gly": "G", #"Lys": "K",
+                       "Asn": "N", "Pro": "P", "Gln": "Q", "Arg": "R", "Ser": "S",
+                       "Thr": "T", "Val": "V", "Trp": "W", "Tyr": "Y", "Cys": "C"}
     seq1=[]
     protractors=[]
     prot_count=1
@@ -823,10 +826,14 @@ def get_external(fasta, mods):
                 for f in fields:
                     if 'x' in f:
                         substring = f[2:]
+                         if substring in aminoacids_back:
+                            substring=aminoacids_back[substring]
                         temporal = [substring]*int(f[0])
                         newF='-'.join(temporal)
                         new_fields.append(newF)
                     else:
+                         if f in aminoacids_back:
+                            f=aminoacids_back[f]
                         new_fields.append(f)
 
                 right = new_fields
@@ -843,6 +850,15 @@ def get_external(fasta, mods):
         else:
             seq1.append(aa)
 
+    if disulf:
+        for pair in disulf:
+            pos1=pair[0]
+            pos2=pair[1]
+            if seq1[pos1-1]=='C' and seq1[pos2-1]=='C':
+                seq1[pos1-1]=f'C({prot_count},3)'
+                seq1[pos2-1]=f'C({prot_count},3)'
+                prot_count+=1
+                
     seq_final='-'.join(seq1)
     for prot in protractors:
         seq_final=seq_final+'.'+prot
