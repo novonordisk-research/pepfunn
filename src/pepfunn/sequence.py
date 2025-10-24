@@ -826,13 +826,13 @@ def get_external(fasta, mods, disulf=[]):
                 for f in fields:
                     if 'x' in f:
                         substring = f[2:]
-                         if substring in aminoacids_back:
+                        if substring in aminoacids_back:
                             substring=aminoacids_back[substring]
                         temporal = [substring]*int(f[0])
                         newF='-'.join(temporal)
                         new_fields.append(newF)
                     else:
-                         if f in aminoacids_back:
+                        if f in aminoacids_back:
                             f=aminoacids_back[f]
                         new_fields.append(f)
 
