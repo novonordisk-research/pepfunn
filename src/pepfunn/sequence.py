@@ -28,6 +28,7 @@ from itertools import combinations
 # BioPython
 from Bio.SeqUtils.ProtParam import ProteinAnalysis
 from Bio import SeqIO
+from Bio.PDB import PDBParser
 from Bio.Blast import NCBIWWW
 from Bio.Blast import NCBIXML
 
@@ -788,6 +789,36 @@ def peptideFromSMILES(smiles, add_smiles=False):
         final_seq= '-'.join(final_pep)
 
     return final_seq
+
+########################################################################################
+def peptideFromStructure(pdb_file, chain):
+    """
+    Get AA sequence from a PDB file. It can be used only for natural AAs
+
+    :param pdb_file: Name of the PDB file of interest
+    :param chain: Chain in the PDB file
+
+    :return: The FASTA sequence
+    """
+
+    aminoacids_back = {"ALA": "A", "ASP": "D", "GLU": "E", "PHE": "F", "HIS": "H", "ILE": "I", "LYS": "K",
+                       "LEU": "L", "MET": "M", "GLY": "G",
+                       "ASN": "N", "PRO": "P", "GLN": "Q", "ARG": "R", "SER": "S", "THR": "T", "VAL": "V",
+                       "TRP": "W", "TYR": "Y", "CYS": "C", "AIB": "B", "ACE": "Ac-"}
+    
+    sequence = ""
+
+    # Read the structure in BioPython format
+    parser = PDBParser()
+    reference = parser.get_structure('REF', pdb_file)
+    for ch in reference[0]:
+        if ch.get_id() == chain:
+            for i, residue in enumerate(ch):
+                seq = aminoacids_back[residue.get_resname()]
+                # Save the sequence
+                sequence = sequence + str(seq)
+
+    return sequence
 
 ##########################################################################
 def get_external(fasta, mods, disulf=[]):
