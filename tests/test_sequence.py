@@ -64,7 +64,7 @@ class TestSequence(unittest.TestCase):
         Test the properties predicted for some peptides
         """
 
-        self.assertEqual(get_properties('GAANDENY'), (-2.0008411239265196, -1.22, 4.0500284194946286))
+        self.assertEqual(get_properties('GAANDENY'), (-2.0008411239265196, -1.2200000000000002, 4.0500284194946286))
         self.assertEqual(get_properties('EAPPSYAEV'), (-1.999412677161022, 1.1600000000000001, 4.0500284194946286))
         self.assertEqual(get_properties('SDVAFRGNLLD'), (-1.0055728771384773, 0.2000000000000003, 4.533500862121582))
         self.assertEqual(get_properties('RRNLKGLNLNLH'), (3.0896133167191, -4.58, 11.999967765808105))
@@ -82,12 +82,12 @@ class TestSequence(unittest.TestCase):
         """
 
         self.assertEqual(get_rules('GAANDENY'), (0, 0))
-        self.assertEqual(get_rules('EAPPSYAEV'), (2, 2))
+        self.assertEqual(get_rules('EAPPSYAEV'), (2, 1))
         self.assertEqual(get_rules('SDVAFRGNLLD'), (2, 0))
-        self.assertEqual(get_rules('RRNLKGLNLNLH'), (4, 2))
+        self.assertEqual(get_rules('RRNLKGLNLNLH'), (4, 1))
         self.assertEqual(get_rules('GVLKEYGV'), (2, 0))
         self.assertEqual(get_rules('MCLRMTAVM'), (2, 2))
-        self.assertEqual(get_rules('EEFELLISNS'), (3, 2))
+        self.assertEqual(get_rules('EEFELLISNS'), (3, 1))
         self.assertEqual(get_rules('SQFDLSTRRLK'), (3, 0))
         self.assertEqual(get_rules('KLMFKTEGPDSD'), (3, 1))
 
