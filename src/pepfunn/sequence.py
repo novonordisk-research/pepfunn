@@ -23,6 +23,7 @@ import warnings
 import sys
 import tempfile
 import numpy as np
+from collections import deque
 from itertools import combinations
 
 # BioPython
@@ -619,7 +620,7 @@ def add_terminal_oxygen(aa_smiles):
     return modified_smiles
 
 ##########################################################################
-def peptideFromSMILES(smiles, add_smiles=False):
+def peptideFromSMILES_old(smiles, add_smiles=False):
     """
     Class to convert from smiles to peptide sequence
 
@@ -778,6 +779,285 @@ def peptideFromSMILES(smiles, add_smiles=False):
                     final_pep.append('X')
 
     
+    if add_smiles:
+        final_seq=''
+        for mon in final_pep:
+            if len(mon)==1:
+                final_seq+=mon
+            else:
+                final_seq+='|'+mon+'|'
+    else:
+        final_seq= '-'.join(final_pep)
+
+    return final_seq
+
+##########################################################################
+def peptideFromSMILES(smiles, add_smiles=False):
+    """
+    Class to convert from smiles to peptide sequence
+
+    :param smiles: SMILES to convert into sequence
+    """
+    
+    aa_dict = {'G': 'NCC(=O)',
+                'A': 'N[C@@]([H])(C)C(=O)',
+                'R': 'N[C@@]([H])(CCCNC(=N)N)C(=O)',
+                'N': 'N[C@@]([H])(CC(=O)N)C(=O)',
+                'D': 'N[C@@]([H])(CC(=O)O)C(=O)',
+                'C': 'N[C@@]([H])(CS)C(=O)',
+                'E': 'N[C@@]([H])(CCC(=O)O)C(=O)',
+                'Q': 'N[C@@]([H])(CCC(=O)N)C(=O)',
+                'H': 'N[C@@]([H])(CC1=CN=C-N1)C(=O)',
+                'I': 'N[C@@]([H])(C(CC)C)C(=O)',
+                'L': 'N[C@@]([H])(CC(C)C)C(=O)',
+                'K': 'N[C@@]([H])(CCCCN)C(=O)',
+                'M': 'N[C@@]([H])(CCSC)C(=O)',
+                'F': 'N[C@@]([H])(Cc1ccccc1)C(=O)',
+                'P': 'N1[C@@]([H])(CCC1)C(=O)',
+                'S': 'N[C@@]([H])(CO)C(=O)',
+                'T': 'N[C@@]([H])(C(O)C)C(=O)',
+                'W': 'N[C@@]([H])(CC(=CN2)C1=C2C=CC=C1)C(=O)',
+                'Y': 'N[C@@]([H])(Cc1ccc(O)cc1)C(=O)',
+                'V': 'N[C@@]([H])(C(C)C)C(=O)'}
+
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(module_dir, SequenceConstants.def_path)
+    file_path = os.path.join(data_dir, SequenceConstants.def_property_ext)    
+    with open(file_path, 'r') as handle:
+
+        # Dictionary with the properties
+        dict_df = {}
+
+        data = handle.read().split('\n')
+        for line in data:
+            if line:
+                fields = line.split()
+                dict_df[fields[0]]=fields[1]
+
+    m = Chem.MolFromSmiles(smiles)
+    try:
+        aa_smiles = {'ALA': 'C[C@H](N)C=O', 'CYS': 'N[C@H](C=O)CS', 'ASP': 'N[C@H](C=O)CC(=O)O', 'GLU': 'N[C@H](C=O)CCC(=O)O', 'PHE': 'N[C@H](C=O)Cc1ccccc1', 
+                    'GLY': 'NCC=O', 'HIS': 'N[C@H](C=O)Cc1c[nH]cn1', 'ILE': 'CC[C@H](C)[C@H](N)C=O', 'LYS': 'NCCCC[C@H](N)C=O', 'LEU': 'CC(C)C[C@H](N)C=O', 
+                    'MET': 'CSCC[C@H](N)C=O', 'ASN': 'NC(=O)C[C@H](N)C=O', 'PRO': 'O=C[C@@H]1CCCN1', 'GLN': 'NC(=O)CC[C@H](N)C=O', 'ARG': 'N=C(N)NCCC[C@H](N)C=O', 
+                    'SER': 'N[C@H](C=O)CO', 'THR': 'C[C@@H](O)[C@H](N)C=O', 'VAL': 'CC(C)[C@H](N)C=O', 'TRP': 'N[C@H](C=O)Cc1c[nH]c2ccccc12','TYR': 'N[C@H](C=O)Cc1ccc(O)cc1'}
+        aas = ['GLY','ALA', 'VAL', 'CYS', 'ASP', 'GLU', 'PHE', 'HIS', 'ILE', 'LYS', 'LEU', 'MET', 'ASN', 'PRO', 'GLN', 'ARG', 'SER', 'THR', 'TRP','TYR']
+        
+        CAatoms = m.GetSubstructMatches(Chem.MolFromSmarts("[C:0](=[O:1])[C:2][N:3]"))
+        for atoms in CAatoms:
+            a = m.GetAtomWithIdx(atoms[2])
+            info = Chem.AtomPDBResidueInfo()
+            info.SetName(" CA ") #spaces are important
+            a.SetMonomerInfo(info)
+        
+        for curr_aa in aas:
+            matches = m.GetSubstructMatches(Chem.MolFromSmiles(aa_smiles[curr_aa]))
+            for atoms in matches:
+                for atom in atoms:
+                    a = m.GetAtomWithIdx(atom)
+                    info = Chem.AtomPDBResidueInfo()
+                    if a.GetMonomerInfo() != None:
+                        if a.GetMonomerInfo().GetName() == " CA ":
+                            info.SetName(" CA ")
+                            info.SetResidueName(curr_aa)
+                            a.SetMonomerInfo(info)
+        
+        # renumber the backbone atoms so the sequence order is correct:
+        mult=len(m.GetSubstructMatches(Chem.MolFromSmiles(aa_smiles["GLY"])))
+        bbsmiles = "O"+"C(=O)CN"*mult
+        backbone = m.GetSubstructMatches(Chem.MolFromSmiles(bbsmiles))[0]
+        
+        id_list = list(backbone)
+        id_list.reverse()
+        for idx in [a.GetIdx() for a in m.GetAtoms()]:
+            if idx not in id_list:
+                id_list.append(idx)
+        m = Chem.RenumberAtoms(m,newOrder=id_list)
+    except:
+        pass
+        
+    residue_entries = {}
+    for patt in ['NCC(=O)N','NCC(=O)O']:
+        peptide_bond_representation = Chem.MolFromSmarts(patt)
+        am = np.array(Chem.GetAdjacencyMatrix(m))
+
+        for peptide_bond in m.GetSubstructMatches(peptide_bond_representation):
+            alpha = peptide_bond[1]
+            nitrogens = set([peptide_bond[0],peptide_bond[-1]])
+
+            aa_atom_idx = set([alpha])
+            set2 = set()
+            while aa_atom_idx != set2:
+                set2 = aa_atom_idx.copy()
+                temp_am = am[:, list(aa_atom_idx)]
+                aa_atom_idx = set(np.where(temp_am==1)[0]) | aa_atom_idx
+                aa_atom_idx -= nitrogens
+            aa_atom_idx.add(peptide_bond[0])
+
+            bonds = []
+            for i,j in combinations(aa_atom_idx, 2):
+                b = m.GetBondBetweenAtoms(int(i),int(j))
+                if b: bonds.append(b.GetIdx())
+
+            mol1 = Chem.PathToSubmol(m, bonds)
+            flag=0
+            residue_token = None
+
+            for aa in aa_dict:
+                smiles2=aa_dict[aa]
+                mol2 = Chem.MolFromSmiles(smiles2)
+                fp1 = FingerprintMols.FingerprintMol(mol1)
+                fp2 = FingerprintMols.FingerprintMol(mol2)
+                smiles_similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
+                if smiles_similarity==1.0:
+                    residue_token = aa
+                    flag=1
+                    break
+
+            if flag==0:
+                for aa in dict_df:
+                    smiles2=dict_df[aa]
+                    mol2 = Chem.MolFromSmiles(smiles2)
+
+                    fp1 = FingerprintMols.FingerprintMol(mol1)
+                    fp2 = FingerprintMols.FingerprintMol(mol2)
+                    smiles_similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
+                    if smiles_similarity==1.0:
+                        residue_token = aa
+                        flag=1
+                        break
+                
+            if flag==0:
+                try:
+                    new_smiles1=add_terminal_oxygen(Chem.MolToSmiles(mol1))
+                    mol1=Chem.MolFromSmiles(new_smiles1)
+
+                    for aa in dict_df: 
+                        smiles2=dict_df[aa]
+                        mol2 = Chem.MolFromSmiles(smiles2)
+
+                        fp1 = FingerprintMols.FingerprintMol(mol1)
+                        fp2 = FingerprintMols.FingerprintMol(mol2)
+                        smiles_similarity = DataStructs.TanimotoSimilarity(fp1, fp2)
+                        if smiles_similarity==1.0:
+                            residue_token = aa
+                            flag=1
+                            break
+                except:
+                    pass
+            
+            if flag==0:
+                if add_smiles:
+                    residue_token = Chem.MolToSmiles(mol1)
+                else:
+                    residue_token = 'X'
+
+            if alpha not in residue_entries:
+                # In this sequence version, do not append to final_pep immediately.
+                # Cache residue anchor information first, then decide order via adjacency.
+                residue_entries[alpha] = {
+                    'token': residue_token,
+                    'n_idx': peptide_bond[0],
+                    'c_idx': peptide_bond[2],
+                    'alpha_idx': alpha,
+                }
+
+    final_pep=[]
+
+    peptide_type = "Unable to identify peptide backbone"
+    if residue_entries:
+        keys = sorted(residue_entries.keys())
+        n = len(keys)
+
+        # Core adjacency rule: if residue i C is bonded to residue j N, then i -> j.
+        # This directed edge encodes peptide direction (N-terminus to C-terminus).
+        edges = {i: set() for i in range(n)}
+        rev_edges = {i: set() for i in range(n)}
+
+        for i, key_i in enumerate(keys):
+            c_i = residue_entries[key_i]['c_idx']
+            for j, key_j in enumerate(keys):
+                if i == j:
+                    continue
+                n_j = residue_entries[key_j]['n_idx']
+                if m.GetBondBetweenAtoms(int(c_i), int(n_j)) is not None:
+                    edges[i].add(j)
+                    rev_edges[j].add(i)
+
+            # In-degree / out-degree are used for two tasks:
+            # 1) topology classification (linear/branched/etc.); 2) topological sorting below.
+        indeg = [len(rev_edges[i]) for i in range(n)]
+        outdeg = [len(edges[i]) for i in range(n)]
+
+        if any(x > 1 for x in indeg) or any(x > 1 for x in outdeg):
+            peptide_type = "Branched"
+        else:
+            und = {i: set() for i in range(n)}
+            for i in range(n):
+                for j in edges[i]:
+                    und[i].add(j)
+                    und[j].add(i)
+
+            seen = set()
+            components = 0
+            for i in range(n):
+                if i in seen:
+                    continue
+                components += 1
+                dq = deque([i])
+                seen.add(i)
+                while dq:
+                    cur = dq.popleft()
+                    for nb in und[cur]:
+                        if nb not in seen:
+                            seen.add(nb)
+                            dq.append(nb)
+
+            if components > 1:
+                peptide_type = "Multi-chain/Disconnected"
+            else:
+                indeg_kahn = indeg.copy()
+                q_cycle = deque([i for i in range(n) if indeg_kahn[i] == 0])
+                visited = 0
+                while q_cycle:
+                    cur = q_cycle.popleft()
+                    visited += 1
+                    for nb in edges[cur]:
+                        indeg_kahn[nb] -= 1
+                        if indeg_kahn[nb] == 0:
+                            q_cycle.append(nb)
+
+                if visited < n:
+                    peptide_type = "Cyclic peptide"
+                else:
+                    starts = [i for i in range(n) if indeg[i] == 0]
+                    ends = [i for i in range(n) if outdeg[i] == 0]
+                    if len(starts) == 1 and len(ends) == 1 and sum(outdeg) == (n - 1):
+                        peptide_type = "Linear"
+                    else:
+                        peptide_type = "Non-linear/Undetermined"
+
+        # Use Kahn topological sorting to obtain residue order, starting from nodes
+        # with in-degree 0 (candidate N-termini).
+        indeg_mut = indeg.copy()
+        q = deque(sorted(i for i in range(n) if indeg_mut[i] == 0))
+        order = []
+
+        while q:
+            cur = q.popleft()
+            order.append(cur)
+            for nb in sorted(edges[cur]):
+                indeg_mut[nb] -= 1
+                if indeg_mut[nb] == 0:
+                    q.append(nb)
+
+        # If sorting covers all nodes, output in topological order.
+        # Otherwise, fall back to alpha-index order to avoid dropping results
+        # in non-DAG cases.
+        if len(order) == n:
+            final_pep = [residue_entries[keys[i]]['token'] for i in order]
+        else:
+            final_pep = [residue_entries[key]['token'] for key in keys]
+
     if add_smiles:
         final_seq=''
         for mon in final_pep:
