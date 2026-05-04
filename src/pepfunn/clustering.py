@@ -25,6 +25,7 @@ import tempfile
 import subprocess
 import os
 import sys
+import logging
 from statistics import median, mean
 
 # RDKit
@@ -47,12 +48,14 @@ import seaborn as sns
 # Classes and functions
 ########################################################################################
 
+logger = logging.getLogger(__name__)
+
 class simClustering:
     """
     Class to provide some methods for sequence or chemistry-based clustering
     """
 
-    def __init__(self, ids=[], molfiles=[], sequences=[]):
+    def __init__(self, ids=None, molfiles=None, sequences=None):
         """
         Run chemical clustering using similarity
 
@@ -62,6 +65,9 @@ class simClustering:
 
         :store the mol objects, ids, and main chain sequences
         """
+        ids = [] if ids is None else ids
+        molfiles = [] if molfiles is None else molfiles
+        sequences = [] if sequences is None else sequences
         
         # List containing the metadata
         self.comps=[]
@@ -82,7 +88,6 @@ class simClustering:
                     self.sequences.append(sequences[i])
                 else:
                     raise ValueError("You should provide a list with the sequences. Please correct")
-                    sys.exit(1)
         else:
             if sequences:
                 for j,seq in enumerate(sequences):
@@ -97,11 +102,10 @@ class simClustering:
                                 self.ids.append(ids[j])
                             else:
                                 self.ids.append(f'mol{j+1}')
-                    except:
+                    except (RuntimeError, ValueError, TypeError, IndexError):
                         self.excluded.append(seq)
             else:
                 raise ValueError("You should provide sequences with or without molfiles. Please correct")
-                sys.exit(1)
 
     ###########################################################
     def run_clustering(self, cutoff=0.3):
@@ -299,7 +303,7 @@ class simClustering:
         return average_similarity
     
     ############################################################
-    def plot_sim_space(self, reference=[], add_cluster_color=False, color_index=[], legends=False, out_name='cluster.png'):
+    def plot_sim_space(self, reference=None, add_cluster_color=False, color_index=None, legends=False, out_name='cluster.png'):
         """
         Function to get the similarity of a molecule with all the dataset
 
@@ -310,6 +314,8 @@ class simClustering:
 
         :return cluster neighbors and distances
         """        
+        reference = [] if reference is None else reference
+        color_index = [] if color_index is None else color_index
         
         # Path to save the logo file
         out_path = os.getcwd()
@@ -320,8 +326,8 @@ class simClustering:
             for ref in reference:
                 try:
                     mol_idx_list.append(self.ids.index(ref))
-                except:
-                    print(f'Reference molecule {ref} was not included in the clustering analysis.')
+                except ValueError:
+                    logger.warning('Reference molecule %s was not included in the clustering analysis.', ref)
 
         neighbors = self.ids
         cluster_labels=[]
@@ -405,7 +411,7 @@ class propClustering:
     Class to provide some methods for clustering based on properties
     """
 
-    def __init__(self, ids=[], molfiles=[], sequences=[]):
+    def __init__(self, ids=None, molfiles=None, sequences=None):
         """
         Run chemical clustering using properties
 
@@ -415,6 +421,9 @@ class propClustering:
 
         :store the mol objects, ids, and main chain sequences
         """
+        ids = [] if ids is None else ids
+        molfiles = [] if molfiles is None else molfiles
+        sequences = [] if sequences is None else sequences
         
         # List containing the metadata
         self.comps=[]
@@ -435,7 +444,7 @@ class propClustering:
                     self.sequences.append(sequences[i])
                 else:
                     raise ValueError("You should provide a list with the sequences. Please correct")
-                    sys.exit(1)
+
         else:
             if sequences:
                 for j,seq in enumerate(sequences):
@@ -450,11 +459,11 @@ class propClustering:
                                 self.ids.append(ids[j])
                             else:
                                 self.ids.append(f'mol{j+1}')
-                    except:
+                    except (RuntimeError, ValueError, TypeError, IndexError):
                         self.excluded.append(seq)
             else:
                 raise ValueError("You should provide sequences with or without molfiles. Please correct")
-                sys.exit(1)
+
 
         # Calculate properties
         self.table=pd.DataFrame()
@@ -486,7 +495,7 @@ class propClustering:
                         'TPSA']
     
     ########################################################################################
-    def plot_PCA(self, reference=[], add_cluster=False, list_desc=[], color_index=[], print_arrows=False, legends=False, out_name='properties.png'):
+    def plot_PCA(self, reference=None, add_cluster=False, list_desc=None, color_index=None, print_arrows=False, legends=False, out_name='properties.png'):
         """
         Plot PCA of a set of properties
         
@@ -498,6 +507,9 @@ class propClustering:
         :param legends: flag to plot or not the legends
         :param out_name: name of the plot
         """
+        reference = [] if reference is None else reference
+        list_desc = [] if list_desc is None else list_desc
+        color_index = [] if color_index is None else color_index
 
         if not list_desc:
             list_desc=self.desc_used
@@ -508,8 +520,8 @@ class propClustering:
             for ref in reference:
                 try:
                     mol_idx_list.append(self.ids.index(ref))
-                except:
-                    print(f'Reference molecule {ref} was not included in the property analysis.')
+                except ValueError:
+                    logger.warning('Reference molecule %s was not included in the property analysis.', ref)
 
         # Path to save the image
         out_path = os.getcwd()
@@ -649,7 +661,7 @@ class propClustering:
 ############################################################
 
 ########################################################################## 
-def sequence_clustering(ids=[], sequences=[], threshold=0.5, min_len_clus=5, add_isolated=True):
+def sequence_clustering(ids=None, sequences=None, threshold=0.5, min_len_clus=5, add_isolated=True):
     """
     Method to do sequence clustering using a set of numerical descriptors
 
@@ -661,6 +673,8 @@ def sequence_clustering(ids=[], sequences=[], threshold=0.5, min_len_clus=5, add
 
     :return: dataframe with the molecules and their clusters
     """
+    ids = [] if ids is None else ids
+    sequences = [] if sequences is None else sequences
 
     if sequences:
         if not ids:
@@ -668,7 +682,6 @@ def sequence_clustering(ids=[], sequences=[], threshold=0.5, min_len_clus=5, add
                 ids.append(f'mol{j+1}')
     else:
         raise ValueError("You should provide a list of sequences. Please correct")
-        sys.exit(1)
      
     clusters={}
     clus_ids={}

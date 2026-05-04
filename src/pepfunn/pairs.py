@@ -128,7 +128,6 @@ class MatchedPairs:
 
         if operation not in ['substract', 'divide']:
             raise ValueError("The operation should be substract or divide. Please correct")
-            sys.exit(1)
 
         if operation == 'substract':
             # Subtract the smaller from the bigger number
@@ -235,7 +234,7 @@ class MatchedPairs:
                     sequences['Begin'].append(begin)
                     sequences['End'].append(end)
                     sequences['Peptide'].append(peptide)
-                except:
+                except (KeyError, ValueError, TypeError, IndexError):
                     pass
         
         # Generate dataframe
@@ -261,7 +260,6 @@ class MatchedPairs:
 
         if len(df.index) != len(df_sequences.index):
             raise ValueError("The number of sequences in both dataframes should be the same. Please correct")
-            sys.exit(1)
 
         if not name_ref:
             name_ref='REF'
@@ -307,11 +305,9 @@ class MatchedPairs:
                     else:
                         if len(operation_columns)!=len(property_columns):
                             raise ValueError("The length of the operation_columns should be the same of the property_columns. Exiting ...")
-                            sys.exit(1)
                         for oper in operation_columns:
                             if oper not in ['substract','divide']:
                                 raise ValueError("The operation value should be substract or divide. Please correct. Exiting ...")
-                                sys.exit(1)
 
                     for j,prop in enumerate(property_columns):
                         value_a = float(df.loc[pair[0], prop])
@@ -372,7 +368,7 @@ class MatchedPairs:
                         seqref_aligned, seqnew_aligned, score=MatchedPairs.alignment_pairs(seq_ref, peptide)
                         sequences['Aligned_Ref'].append(seqref_aligned)
                         sequences['Aligned_Pep'].append(seqnew_aligned)
-                except:
+                except (KeyError, ValueError, TypeError, IndexError):
                     pass
         
         # Generate dataframe
@@ -399,7 +395,6 @@ class MatchedPairs:
 
         if len(df.index) != len(df_sequences.index):
             raise ValueError("The number of sequences in both dataframes should be the same. Please correct")
-            sys.exit(1)
 
         if seq_ref:
             results={'ID_A':[], 'ID_B':[], 'Mutations':[], 'Distance':[]}
@@ -494,11 +489,9 @@ class MatchedPairs:
                     else:
                         if len(operation_columns)!=len(property_columns):
                             raise ValueError("The length of the operation_columns should be the same of the property_columns. Exiting ...")
-                            sys.exit(1)
                         for oper in operation_columns:
                             if oper not in ['substract','divide']:
                                 raise ValueError("The operation value should be substract or divide. Please correct. Exiting ...")
-                                sys.exit(1)
 
                     for j,prop in enumerate(property_columns):
                         value_a = float(df.loc[pair[0], prop])
@@ -544,7 +537,6 @@ class MatchedPairs:
 
         if len(property_columns) < 2:
             raise ValueError(f"At least two properties should be included to generate the plot")
-            sys.exit(1)
         
         # df with the properties
         plot_df=filtered_df[property_columns]

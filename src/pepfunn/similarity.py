@@ -19,6 +19,7 @@ import pandas as pd
 import re
 import os
 import pickle
+import logging
 import numpy as np
 import warnings
 import sys
@@ -47,6 +48,8 @@ from igraph import Graph
 ########################################################################################
 # Classes and functions
 ########################################################################################
+
+logger = logging.getLogger(__name__)
 
 class Alignment:
 
@@ -228,7 +231,7 @@ class Alignment:
 
         # Run pair alignments and create the matrix
         matrixP = {}
-        print("Generating the matrix ...")
+        logger.info("Generating the matrix ...")
         for i,name1 in enumerate(totalNames):
             smiles1=totalSmiles[i]
             totalValues=[]
@@ -243,7 +246,7 @@ class Alignment:
                     smiles_similarity=DataStructs.DiceSimilarity(fp1,fp2)
 
                     totalValues.append(smiles_similarity)
-                except:
+                except (RuntimeError, ValueError, TypeError):
                     totalValues.append(0.0)
 
             for i,ele in enumerate(totalValues):
@@ -253,7 +256,7 @@ class Alignment:
 
 
         # Output file in a local data folder
-        print("The matrix with a threshold of {}% has been generated".format(threshold))
+        logger.info("The matrix with a threshold of %s%% has been generated", threshold)
         data_dir = os.path.join(module_dir, SequenceConstants.def_path)
         file_path = os.path.join(data_dir, SequenceConstants.def_matrix)
         with open(file_path, 'w') as handle:
@@ -305,7 +308,6 @@ class Alignment:
 
         # Without matrix
         if mode == "unweighted":
-            #print("Only matching alignment")
             for a in pairwise2.align.globalxx(peptideList1, peptideList2, gap_char=["-"]):
                 score=a.score
                 start=a.start
@@ -616,7 +618,7 @@ class pepDescriptors:
         :param monomer_lib: Flag to use a monomer library different to the internal one
         :param property_lib: Flag to generate a different property file than the internal
         """
-        print("Calculating the properties of the monomers ...")
+        logger.info("Calculating the properties of the monomers ...")
 
         # Dictionary with the properties
         dict_df = {'name':[], 'smiles':[], 'mw':[], 'logp':[], 'nrot':[], 'tpsa':[],
@@ -668,7 +670,7 @@ class pepDescriptors:
                 dict_df['heavy'].append(mol_heavy)
 
         # Output file in a local data folder
-        print("The properties of the monomers have been calculated")
+        logger.info("The properties of the monomers have been calculated")
         if property_lib is None:
             data_dir = os.path.join(module_dir, SequenceConstants.def_path)
             file_path = os.path.join(data_dir, SequenceConstants.def_property)
@@ -811,10 +813,10 @@ class pepDescriptors:
         totalMon = len(monomers)
 
         if totalMon == 1:
-            print('Warning: The sequence only have one amino acid and no Moran correlation descriptors will be calculated')
+            warnings.warn('The sequence only have one amino acid and no Moran correlation descriptors will be calculated')
 
         if totalMon < nlag + 1:
-            print('Warning: the sequence should be larger than nlag+1: ' + str(nlag + 1) + '. The nlag was refactored based on the chain length')
+            warnings.warn('The sequence should be larger than nlag+1: ' + str(nlag + 1) + '. The nlag was refactored based on the chain length')
             nlag = totalMon -1
 
         AAidx = []
@@ -1026,7 +1028,7 @@ class graphPep:
                     else:
                         for i in range(0, chainLink-1):
                             pos=i+1
-                            print(chainLink-pos)
+                            logger.debug("Chain link offset: %s", chainLink-pos)
                             if i ==0:
                                 node=len(self.aa_list[chainLink-pos])
                             else:

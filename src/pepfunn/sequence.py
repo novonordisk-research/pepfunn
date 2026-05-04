@@ -700,7 +700,7 @@ def peptideFromSMILES_old(smiles, add_smiles=False):
             if idx not in id_list:
                 id_list.append(idx)
         m = Chem.RenumberAtoms(m,newOrder=id_list)
-    except:
+    except (RuntimeError, ValueError, IndexError, AttributeError):
         pass
         
     # Pattern of the AA backbone
@@ -769,7 +769,7 @@ def peptideFromSMILES_old(smiles, add_smiles=False):
                             final_pep.append(aa)
                             flag=1
                             break
-                except:
+                except (RuntimeError, ValueError, TypeError, AttributeError):
                     pass
             
             if flag==0:
@@ -872,7 +872,7 @@ def peptideFromSMILES(smiles, add_smiles=False):
             if idx not in id_list:
                 id_list.append(idx)
         m = Chem.RenumberAtoms(m,newOrder=id_list)
-    except:
+    except (RuntimeError, ValueError, IndexError, AttributeError):
         pass
         
     residue_entries = {}
@@ -942,7 +942,7 @@ def peptideFromSMILES(smiles, add_smiles=False):
                             residue_token = aa
                             flag=1
                             break
-                except:
+                except (RuntimeError, ValueError, TypeError, AttributeError):
                     pass
             
             if flag==0:
@@ -1101,7 +1101,7 @@ def peptideFromStructure(pdb_file, chain):
     return sequence
 
 ##########################################################################
-def get_external(fasta, mods, disulf=[]):
+def get_external(fasta, mods, disulf=None):
     """
     Function to generate BILN format given a sequence and their modifications
     :param fasta: Fasta version of the peptide
@@ -1109,6 +1109,7 @@ def get_external(fasta, mods, disulf=[]):
 
     :return: seq_final
     """
+    disulf = [] if disulf is None else disulf
     aminoacids_back = {"Ala": "A", "Asp": "D", "Glu": "E", "Phe": "F", "His": "H",
                        "Ile": "I", "Leu": "L", "Met": "M", "Gly": "G", #"Lys": "K",
                        "Asn": "N", "Pro": "P", "Gln": "Q", "Arg": "R", "Ser": "S",

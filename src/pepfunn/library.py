@@ -14,6 +14,7 @@ __email__ = "raoc@novonordisk.com"
 ########################################################################################
 
 # System
+import logging
 import random
 import math
 import numpy as np
@@ -37,6 +38,8 @@ from pepfunn.sequence import Sequence
 ########################################################################################
 # Classes and Functions
 ########################################################################################
+
+logger = logging.getLogger(__name__)
 
 class LibraryConstants(enum.auto):
     """
@@ -74,15 +77,22 @@ class Library:
     Class to build peptide libraries based on some requirements
     """
     ########################################################################################
-    def __init__(self, seeds=[], population_size=100, 
+    def __init__(self, seeds=None, population_size=100,
             mode='exploration', pattern='', single_mod=True,
-            list_aa=[], min_pep_size=3, max_pep_size=10, add_phys_chem=False, mw_neigh=10, nb_number=2,
-            mode_scan='random', positions=[], pairs=[], add_scan=False, ref_scan=['A'], no_priority=[],
+            list_aa=None, min_pep_size=3, max_pep_size=10, add_phys_chem=False, mw_neigh=10, nb_number=2,
+            mode_scan='random', positions=None, pairs=None, add_scan=False, ref_scan=None, no_priority=None,
             add_prop_analog=False, perc_limit=0.1, from_child=False, verbose=True):
 
         """
         Definition of the parameters
         """
+        seeds = [] if seeds is None else seeds
+        list_aa = [] if list_aa is None else list_aa
+        positions = [] if positions is None else positions
+        pairs = [] if pairs is None else pairs
+        ref_scan = ['A'] if ref_scan is None else ref_scan
+        no_priority = [] if no_priority is None else no_priority
+
         self.population_size = population_size
         if not list_aa:
             self.list_aa = LibraryConstants.AA
@@ -110,11 +120,9 @@ class Library:
 
         if self.mode not in ['exploration', 'scanning']:
             raise ValueError("The mode should be exploration or scanning. Please correct")
-            sys.exit(1)
 
         if self.mode in ['scanning'] and not self.seeds:
             raise ValueError("For scanning mode it is required a list of seeds. Please correct")
-            sys.exit(1)
         
         if self.mode=='exploration':
             if not self.pattern:
@@ -214,7 +222,7 @@ class Library:
         # Iterate until the population is completed
         while len(population) < self.population_size:
             if self.verbose:
-                print(f'Population length: {len(population)}')
+                logger.info('Population length: %s', len(population))
             gene = ""
             for aa in self.pattern:
                 if aa == 'X':
@@ -257,7 +265,7 @@ class Library:
         # Iterate until the population is completed
         while len(population) < self.population_size:
             if self.verbose:
-                print(f'Population length: {len(population)}')
+                logger.info('Population length: %s', len(population))
             gene_size = round(random.uniform(self.min_pep_size, self.max_pep_size))
             gene = ""
             for j in range(gene_size):
@@ -294,15 +302,12 @@ class Library:
 
         if self.mode_scan not in ['random', 'pairs', 'all']:
             raise ValueError("The mode should be all, random, pairs or scan. Please correct")
-            sys.exit(1)
 
         if self.mode_scan in ['all', 'random'] and not self.positions:
             raise ValueError("For random or full exploration you need to provide a list with the positions. Please correct")
-            sys.exit(1)
         
         if self.mode_scan in ['all', 'pairs'] and not self.pairs:
             raise ValueError("For pairs or full exploration you need to provide a list with the pairs, including the position and the aa to mutate to. Please correct")
-            sys.exit(1)
         
         population = []
         pop_counts = {}
@@ -325,7 +330,7 @@ class Library:
         # Iterate over the population
         while len(population) < self.population_size:
             if self.verbose:
-                print(f'Population length: {len(population)}')
+                logger.info('Population length: %s', len(population))
 
             seed = random.choice(temp_pop)
             all_genes=[]
@@ -390,15 +395,12 @@ class Library:
 
         if self.mode_scan not in ['random', 'pairs', 'all']:
             raise ValueError("The mode should be all, random, pairs or scan. Please correct")
-            sys.exit(1)
 
         if self.mode_scan in ['all', 'random'] and not self.positions:
             raise ValueError("For random or full exploration you need to provide a list with the positions. Please correct")
-            sys.exit(1)
         
         if self.mode_scan in ['all', 'pairs'] and not self.pairs:
             raise ValueError("For pairs or full exploration you need to provide a list with the pairs, including the position and the aa to mutate to. Please correct")
-            sys.exit(1)
         
 
         population = []
@@ -409,7 +411,7 @@ class Library:
         # Iterate over the population
         while len(population) < self.population_size:
             if self.verbose:
-                print(f'Population length: {len(population)}')
+                logger.info('Population length: %s', len(population))
             seed = random.choice(self.seeds)
 
             #num = random.randint(1, nb_number)
@@ -522,9 +524,8 @@ class Library:
         for i in range(0,final_number):
             try:
                 final_pop.append(sorted_dict[i][0])
-            except:
+            except IndexError:
                 raise ValueError("The required number is higher that the number of filtered peptide. Please reduce the number of candidates or decrease the max_single_double variable")
-                sys.exit(1)
         
         return final_pop
    

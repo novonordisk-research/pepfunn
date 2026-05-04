@@ -20,6 +20,7 @@ import itertools
 import warnings
 import sys
 import re
+import logging
 from string import ascii_uppercase as alc
 import pickle
 from pathlib import Path
@@ -34,6 +35,8 @@ from rdkit.Chem import AllChem
 ########################################################################################
 # Classes and functions
 ########################################################################################
+
+logger = logging.getLogger(__name__)
 
 class Monomer:
 
@@ -191,7 +194,7 @@ class Monomer:
                             if a not in list_codes and a not in comp_pdb:
                                 pdb_code = a
                                 break
-            print(pdb_code)
+            logger.debug("Generated PDB code: %s", pdb_code)
 
         return pdb_code
     
@@ -338,7 +341,7 @@ class Monomer:
             mol = AllChem.AddHs(mol)
             AllChem.EmbedMolecule(mol, maxAttempts=5000, randomSeed=0xF00D)
             AllChem.UFFOptimizeMolecule(mol)
-        except:
+        except (RuntimeError, ValueError):
             pass
 
         # Remove hydrogens
@@ -362,10 +365,12 @@ class Monomer:
 
     ########################################################################################
     @staticmethod
-    def create_boltz_input(sequences, id_values=[], modifications=[], folder_name='configurations'):
+    def create_boltz_input(sequences, id_values=None, modifications=None, folder_name='configurations'):
         '''
         Function to create fasta files in a new folder
         '''
+        id_values = [] if id_values is None else id_values
+        modifications = [] if modifications is None else modifications
         os.makedirs(folder_name, exist_ok=True)
 
         names=[]
@@ -398,10 +403,12 @@ class Monomer:
 
     ########################################################################################
     @staticmethod
-    def create_boltz_complex(sequences, target_sequence, target_sequence2='', id_values=[], modifications=[], folder_name='configurations'):
+    def create_boltz_complex(sequences, target_sequence, target_sequence2='', id_values=None, modifications=None, folder_name='configurations'):
         '''
         Function to create fasta files in a new folder
         '''
+        id_values = [] if id_values is None else id_values
+        modifications = [] if modifications is None else modifications
         os.makedirs(folder_name, exist_ok=True)
         chains = ['A','B','C','D','E']
         names=[]
@@ -445,10 +452,11 @@ class Monomer:
 
     ########################################################################################
     @staticmethod
-    def create_boltz_input_smiles(smiles, id_values=[], folder_name='configurations'):
+    def create_boltz_input_smiles(smiles, id_values=None, folder_name='configurations'):
         '''
         Function to create fasta files in a new folder
         '''
+        id_values = [] if id_values is None else id_values
         os.makedirs(folder_name, exist_ok=True)
 
         names=[]
@@ -474,10 +482,11 @@ class Monomer:
     
     ########################################################################################
     @staticmethod
-    def create_boltz_complex_smiles(smiles, target_sequence, id_values=[], affinity_flag=True, folder_name='configurations'):
+    def create_boltz_complex_smiles(smiles, target_sequence, id_values=None, affinity_flag=True, folder_name='configurations'):
         '''
         Function to create fasta files in a new folder
         '''
+        id_values = [] if id_values is None else id_values
         os.makedirs(folder_name, exist_ok=True)
 
         names=[]
