@@ -1,0 +1,72 @@
+[build-system]
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "pepfunn"
+dynamic = ["version"]
+description = "Protocols for the analysis of peptides using cheminformatics and bioinformatics tools"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+license-files = ["LICENSE"]
+authors = [
+  { name = "Molecular AI - Novo Nordisk", email = "RAOC@novonordisk.com" },
+]
+keywords = ["peptides", "cheminformatics", "bioinformatics", "rdkit"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Science/Research",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.9",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Bio-Informatics",
+  "Topic :: Scientific/Engineering :: Chemistry",
+]
+dependencies = [
+  "biopython>=1.79",
+  "igraph>=0.9.10",
+  "matplotlib",
+  "networkx>=2.5",
+  "numpy>=1.22.2",
+  "openpyxl>=3.0.9",
+  "pandas>=1.4.1",
+  "rdkit",
+  "requests>=2.27.1",
+  "scikit-learn",
+  "seaborn",
+]
+
+[project.optional-dependencies]
+dev = [
+  "build",
+  "pytest",
+  "ruff",
+  "twine",
+]
+docs = [
+  "sphinx-jsonschema",
+]
+notebooks = [
+  "jupyter",
+]
+
+[project.urls]
+Homepage = "https://github.com/novonordisk-research/pepfunn"
+Repository = "https://github.com/novonordisk-research/pepfunn"
+Issues = "https://github.com/novonordisk-research/pepfunn/issues"
+
+[tool.setuptools.dynamic]
+version = { attr = "pepfunn.__version__" }
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+pepfunn = ["data/*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]

@@ -10,13 +10,19 @@ Here we present PepFuNN, a package for the analysis of natural and modified pept
 
 The package depends on some external packages like RDKit (https://rdkit.org/) and BioPython (https://biopython.org/). Their licenses are included in the repository.
 
-## Quick installation
+## Quick Installation
 
 The project can be cloned to run a local pip installation `pip install -e .`. 
 
 The package can also be installed directly from Github with the following command:
 
 `pip install git+https://github.com/novonordisk-research/pepfunn.git`
+
+For local development, install the package with development tools:
+
+```Bash
+python3 -m pip install -e ".[dev]"
+```
 
 ## Main functions
 
@@ -31,7 +37,7 @@ A folder called `notebooks` include a set of jupyter scripts per module availabl
 A set of unit tests are available in the `tests` folder. These can be run separately per module by calling each test script, or all can be tested at the same time using the `test.py` file.
 
 ```Bash
-python test.py
+python3 -m pytest
 ```
 
 ## References
