@@ -48,6 +48,8 @@ from igraph import Graph
 # Classes and functions
 ########################################################################################
 
+_prop_cache = {}
+
 class Alignment:
 
     """Class to allow the alignment of two sequences, including those with natural or unnatural amino acids.
@@ -414,7 +416,15 @@ class Alignment:
 
 ##########################################################################
 # Additional function
-########################################################################## 
+##########################################################################
+def _get_prop_lookup(file_path):
+    if file_path not in _prop_cache:
+        with open(file_path, 'r') as handle:
+            df = pepDescriptors.get_properties(handle)
+        _prop_cache[file_path] = df.set_index('name').to_dict('index')
+    return _prop_cache[file_path]
+
+##########################################################################
 def monomerFP(peptide, radius=2, nBits=1024, add_freq=False, prop_list=['heavy', 'nrot', 'hacc', 'hdon', 'nhet', 'tpsa', 'mw'], property_lib=None):
     """
     Function to calculate a monomer-based fingerprint based on a list of monomer properties and a radius
@@ -514,20 +524,10 @@ def monomerFP(peptide, radius=2, nBits=1024, add_freq=False, prop_list=['heavy',
         else:
             final_frags[fragment]=frags[fragment]
 
-    if property_lib is None:
-        # Read the pre-calculated properties of the monomers    
-        module_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(module_dir, SequenceConstants.def_path)
-        file_path = os.path.join(data_dir, SequenceConstants.def_property)
-        with open(file_path, 'r') as handle:
-            monomers_prop = pepDescriptors.get_properties(handle)
-    else:
-        # Read the pre-calculated properties of the monomers    
-        module_dir = os.path.dirname(os.path.abspath(__file__))
-        data_dir = os.path.join(module_dir, SequenceConstants.def_path)
-        file_path = os.path.join(data_dir, property_lib)
-        with open(file_path, 'r') as handle:
-            monomers_prop = pepDescriptors.get_properties(handle)
+    module_dir = os.path.dirname(os.path.abspath(__file__))
+    data_dir = os.path.join(module_dir, SequenceConstants.def_path)
+    file_path = os.path.join(data_dir, property_lib if property_lib else SequenceConstants.def_property)
+    prop_lookup = _get_prop_lookup(file_path)
 
     # Define the fingerprint
     fp = [0]*nBits
@@ -542,7 +542,7 @@ def monomerFP(peptide, radius=2, nBits=1024, add_freq=False, prop_list=['heavy',
             mon = re.sub(r'\[', '', mon)
             mon = re.sub(r'\]', '', mon)
             for prop in prop_list:
-                value=monomers_prop.loc[monomers_prop['name'] == mon, prop].item()
+                value=prop_lookup[mon][prop]
                 int_code+=str(int(float(value)))
             code.append(int(int_code))
         
@@ -775,17 +775,10 @@ class pepDescriptors:
             
         self.sequence = sequence
         
-        if property_lib is None:
-            module_dir = os.path.dirname(os.path.abspath(__file__))
-            data_dir = os.path.join(module_dir, SequenceConstants.def_path)
-            file_path = os.path.join(data_dir, SequenceConstants.def_property)
-        else:
-            module_dir = os.path.dirname(os.path.abspath(__file__))
-            data_dir = os.path.join(module_dir, SequenceConstants.def_path)
-            file_path = os.path.join(data_dir, property_lib)
-            
-        with open(file_path, 'r') as handle:
-            self.monomers_prop = pepDescriptors.get_properties(handle) 
+        module_dir = os.path.dirname(os.path.abspath(__file__))
+        data_dir = os.path.join(module_dir, SequenceConstants.def_path)
+        file_path = os.path.join(data_dir, property_lib if property_lib else SequenceConstants.def_property)
+        self._prop_lookup = _get_prop_lookup(file_path)
 
     ##########################################################################
     def moranCorrelation(self, nlag=5, label=False, AAidxName = ['nrot', 'logp', 'tpsa', 'mw']) -> dict:
@@ -824,7 +817,7 @@ class pepDescriptors:
                 mon = re.sub(r'\[', '', res)
                 mon = re.sub(r'\]', '', mon)
                 mon = re.sub("\(\d+,\d+\)", "", mon)
-                property_values.append(self.monomers_prop.loc[self.monomers_prop['name'] == mon, j].item())
+                property_values.append(self._prop_lookup[mon][j])
             AAidx.append(property_values)
 
         AAidx1 = np.array([float(j) for i in AAidx for j in i])
